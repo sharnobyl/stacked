@@ -293,11 +293,12 @@ export const RowIcon: React.FC<{ kind: "text" | "image" }> = ({ kind }) =>
     </div>
   );
 
-export const ItemCard: React.FC<{ text: string; kind: "text" | "image"; w: number }> = ({
-  text,
-  kind,
-  w,
-}) => (
+export const ItemCard: React.FC<{
+  text: string;
+  kind: "text" | "image";
+  w: number;
+  icon?: React.ReactNode;
+}> = ({ text, kind, w, icon }) => (
   <div
     style={{
       width: w,
@@ -316,7 +317,7 @@ export const ItemCard: React.FC<{ text: string; kind: "text" | "image"; w: numbe
       overflow: "hidden",
     }}
   >
-    <RowIcon kind={kind} />
+    {icon ?? <RowIcon kind={kind} />}
     <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{text}</span>
   </div>
 );
