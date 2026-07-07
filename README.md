@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Resources/AppIcon.png" width="160" alt="Stacked icon">
+</p>
+
 # Stacked
 
 An open-source macOS paste stack: copy a bunch of things, then paste them out

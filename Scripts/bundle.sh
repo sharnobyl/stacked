@@ -14,9 +14,10 @@ fi
 
 APP="build/Stacked.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Stacked"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 # Ad-hoc signature: required to launch on Apple Silicon and keeps the
 # Accessibility grant more stable across rebuilds than an unsigned binary.
