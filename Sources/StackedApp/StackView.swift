@@ -125,11 +125,14 @@ struct StackView: View {
                 .onMove { indices, newOffset in onMove(indices, newOffset) }
             }
             .listStyle(.plain)
-            .onChange(of: store.items.count) { _ in
-                if let firstID = store.orderedForPaste.first?.id {
-                    withAnimation { proxy.scrollTo(firstID, anchor: .top) }
-                }
-            }
+            .onChange(of: store.items.count) { _ in scrollToTop(proxy) }
+            .onChange(of: store.direction) { _ in scrollToTop(proxy) }
+        }
+    }
+
+    private func scrollToTop(_ proxy: ScrollViewProxy) {
+        if let firstID = store.orderedForPaste.first?.id {
+            withAnimation { proxy.scrollTo(firstID, anchor: .top) }
         }
     }
 
