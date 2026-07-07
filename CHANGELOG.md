@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.0 — unreleased
+## v0.1.0 — 2026-07-07
 - Initial release: hotkey-activated paste stack (⇧⌘C), sequential ⌘V paste,
   reverse direction, per-item delete, Accessibility-free fallback mode.
 - Panel visibility is independent of the stack: hide the panel and keep

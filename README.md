@@ -31,12 +31,25 @@ first, then paste it out in sequence.
 
 ## Install
 
-1. Download `Stacked-vX.Y.Z.zip` from the
-   [latest release](../../releases/latest).
-2. Unzip and move `Stacked.app` to `/Applications`.
-3. First launch: the app is not notarized, so right-click `Stacked.app` →
-   **Open** → **Open**. (Or run
-   `xattr -d com.apple.quarantine /Applications/Stacked.app`.)
+**The easy way** — open Terminal (⌘-Space, type "Terminal", press Return),
+paste this line, press Return:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sharnobyl/stacked/main/install.sh | bash
+```
+
+Done. Stacked downloads, installs itself into Applications, and launches.
+
+**With Homebrew:**
+
+```sh
+brew install --cask --no-quarantine sharnobyl/tap/stacked
+```
+
+**Manually:** download `Stacked-vX.Y.Z.zip` from the
+[latest release](../../releases/latest), unzip, drag `Stacked.app` to
+Applications, then right-click it → **Open** → **Open** (needed once because
+the app is not notarized).
 
 Requires macOS 13 or later.
 
