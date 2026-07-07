@@ -43,4 +43,5 @@ You are executing the implementation plan at
 
 ## Blockers
 
-(none yet)
+- Task 11 Step 5 (manual QA via docs/QA.md) and Task 14 Step 4 (v0.1.0 tag)
+  need a human GUI session. Everything else is automatable.
