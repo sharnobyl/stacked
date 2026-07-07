@@ -8,18 +8,20 @@ struct StackView: View {
     var onReverse: () -> Void
     var onDelete: (StackItem) -> Void
     var onItemClick: (StackItem) -> Void
+    var onMove: (IndexSet, Int) -> Void
     var onClearAll: () -> Void
     var onRequestPermission: () -> Void
+    var onDismissBanner: () -> Void
     var onHidePanel: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
-            if !state.hasAccessibility { permissionBanner }
+            if !state.hasAccessibility && !state.bannerDismissed { permissionBanner }
             if store.isEmpty { emptyState } else { itemList }
         }
-        .frame(width: 260, height: 300)
+        .frame(minWidth: 220, maxWidth: .infinity, minHeight: 180, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
@@ -51,20 +53,29 @@ struct StackView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
-            .help("Hide panel (stack stays active)")
+            .help("Hide panel (stack stays active) — ⇧⌥C")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
     }
 
     private var permissionBanner: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Grant Accessibility to paste with ⌘V")
-                .font(.caption).bold()
-            Text("Until then, click an item to copy it, then paste manually.")
-                .font(.caption2).foregroundStyle(.secondary)
-            Button("Open System Settings", action: onRequestPermission)
-                .font(.caption)
+        HStack(alignment: .top, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Grant Accessibility to paste with ⌘V")
+                    .font(.caption).bold()
+                Text("Until then, click an item to copy it, then paste manually.")
+                    .font(.caption2).foregroundStyle(.secondary)
+                Button("Open System Settings", action: onRequestPermission)
+                    .font(.caption)
+            }
+            Spacer(minLength: 0)
+            Button(action: onDismissBanner) {
+                Image(systemName: "xmark")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            .buttonStyle(.borderless)
+            .help("Dismiss")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
@@ -105,6 +116,7 @@ struct StackView: View {
                         }
                         .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                 }
+                .onMove { indices, newOffset in onMove(indices, newOffset) }
             }
             .listStyle(.plain)
             .onChange(of: store.items.count) { _ in
@@ -128,6 +140,12 @@ struct StackView: View {
                 }
             }
             Spacer(minLength: 0)
+            Button(action: { onDelete(item) }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
+            .buttonStyle(.borderless)
+            .help("Delete")
         }
         .padding(.vertical, 1)
     }

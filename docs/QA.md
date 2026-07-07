@@ -31,6 +31,13 @@ stop being intercepted.
 - [ ] Copying still works normally system-wide
 
 ## Panel behavior
+- [ ] ⇧⌥C toggles panel visibility (activates the stack if inactive)
+- [ ] Panel is resizable by dragging its edges; min ~220×180
+- [ ] Row delete button (right side) removes the item
+- [ ] Drag a row to reorder; paste order follows the new arrangement
+      (test in both directions)
+- [ ] Fallback mode: clicking an item copies it but does NOT remove it
+- [ ] Permission banner X dismisses it; stays dismissed after relaunch
 - [ ] X button hides the panel; copies are still captured and ⌘V still pastes
       from the stack
 - [ ] Trash button empties the stack (count goes to 0, empty state shows)

@@ -22,7 +22,8 @@ final class StatusItemController: NSObject {
         toggleItem.target = self
         menu.addItem(toggleItem)
 
-        panelItem = NSMenuItem(title: "Show Panel", action: #selector(togglePanelClicked), keyEquivalent: "")
+        panelItem = NSMenuItem(title: "Show Panel", action: #selector(togglePanelClicked), keyEquivalent: "c")
+        panelItem.keyEquivalentModifierMask = [.shift, .option]
         panelItem.target = self
         menu.addItem(panelItem)
 

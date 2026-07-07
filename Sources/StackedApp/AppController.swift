@@ -24,8 +24,12 @@ final class AppController: NSObject, NSApplicationDelegate {
             onReverse: { [weak self] in self?.store.toggleDirection() },
             onDelete: { [weak self] item in self?.store.remove(id: item.id) },
             onItemClick: { [weak self] item in self?.itemClicked(item) },
+            onMove: { [weak self] indices, offset in
+                self?.store.moveDisplayed(fromOffsets: indices, toOffset: offset)
+            },
             onClearAll: { [weak self] in self?.store.clear() },
             onRequestPermission: { [weak self] in self?.requestPermission() },
+            onDismissBanner: { [weak self] in self?.state.bannerDismissed = true },
             onHidePanel: { [weak self] in self?.hidePanel() }
         )
         panel = StackPanel(contentView: view)
@@ -33,8 +37,10 @@ final class AppController: NSObject, NSApplicationDelegate {
             onToggleStack: { [weak self] in self?.toggle() },
             onTogglePanel: { [weak self] in self?.togglePanel() }
         )
-        hotkey = HotkeyManager(onToggle: { [weak self] in self?.toggle() })
-        hotkey?.register()
+        let hotkey = HotkeyManager()
+        hotkey.register(.toggleStack) { [weak self] in self?.toggle() }
+        hotkey.register(.togglePanel) { [weak self] in self?.togglePanel() }
+        self.hotkey = hotkey
 
         // Badge count follows the stack even while the panel is hidden.
         store.$items
@@ -89,10 +95,11 @@ final class AppController: NSObject, NSApplicationDelegate {
                                      count: count ?? store.items.count)
     }
 
+    // Fallback mode only: load the clicked item onto the clipboard for a
+    // manual paste. The item stays in the stack — deletion is explicit.
     private func itemClicked(_ item: StackItem) {
         guard !state.hasAccessibility else { return }
         PasteboardIO.write(item, to: .general, markSelfWrite: true)
-        store.remove(id: item.id)
     }
 
     private func requestPermission() {

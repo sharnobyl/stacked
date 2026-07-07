@@ -7,9 +7,10 @@ import SwiftUI
 final class StackPanel: NSPanel {
     init(contentView: some View) {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 260, height: 300),
-                   styleMask: [.borderless, .nonactivatingPanel],
+                   styleMask: [.borderless, .nonactivatingPanel, .resizable],
                    backing: .buffered,
                    defer: false)
+        contentMinSize = NSSize(width: 220, height: 180)
         isFloatingPanel = true
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]

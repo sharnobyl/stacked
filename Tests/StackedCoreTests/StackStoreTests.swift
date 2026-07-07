@@ -73,3 +73,26 @@ final class StackStoreTests: XCTestCase {
         XCTAssertFalse(makeStore(["a"]).isEmpty)
     }
 }
+
+extension StackStoreTests {
+    func testMoveDisplayedInFIFODirection() {
+        let store = StackStore()
+        ["a", "b", "c"].forEach { store.push(StackItem(representations: [["public.utf8-plain-text": $0.data(using: .utf8)!]])) }
+        // Display order == copy order in FIFO. Move "c" (display 2) to the front.
+        store.moveDisplayed(fromOffsets: IndexSet(integer: 2), toOffset: 0)
+        XCTAssertEqual(store.orderedForPaste.map(\.preview), ["c", "a", "b"])
+        XCTAssertEqual(store.items.map(\.preview), ["c", "a", "b"])
+    }
+
+    func testMoveDisplayedInLIFODirection() {
+        let store = StackStore()
+        ["a", "b", "c"].forEach { store.push(StackItem(representations: [["public.utf8-plain-text": $0.data(using: .utf8)!]])) }
+        store.toggleDirection()
+        // Display order is ["c", "b", "a"]. Move "a" (display 2) to the front.
+        store.moveDisplayed(fromOffsets: IndexSet(integer: 2), toOffset: 0)
+        XCTAssertEqual(store.orderedForPaste.map(\.preview), ["a", "c", "b"])
+        // Storage stays in copy-order convention (oldest first == reverse of display).
+        XCTAssertEqual(store.items.map(\.preview), ["b", "c", "a"])
+        XCTAssertEqual(store.next?.preview, "a")
+    }
+}
