@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Combine
 import StackedCore
 
 @MainActor
@@ -11,6 +12,7 @@ final class AppController: NSObject, NSApplicationDelegate {
     private var hotkey: HotkeyManager?
     private var panel: StackPanel?
     private var statusItemController: StatusItemController?
+    private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         monitor.onCapture = { [weak self] item in self?.store.push(item) }
@@ -22,13 +24,24 @@ final class AppController: NSObject, NSApplicationDelegate {
             onReverse: { [weak self] in self?.store.toggleDirection() },
             onDelete: { [weak self] item in self?.store.remove(id: item.id) },
             onItemClick: { [weak self] item in self?.itemClicked(item) },
+            onClearAll: { [weak self] in self?.store.clear() },
             onRequestPermission: { [weak self] in self?.requestPermission() },
-            onClose: { [weak self] in self?.deactivate() }
+            onHidePanel: { [weak self] in self?.hidePanel() }
         )
         panel = StackPanel(contentView: view)
-        statusItemController = StatusItemController(onToggle: { [weak self] in self?.toggle() })
+        statusItemController = StatusItemController(
+            onToggleStack: { [weak self] in self?.toggle() },
+            onTogglePanel: { [weak self] in self?.togglePanel() }
+        )
         hotkey = HotkeyManager(onToggle: { [weak self] in self?.toggle() })
         hotkey?.register()
+
+        // Badge count follows the stack even while the panel is hidden.
+        store.$items
+            .map(\.count)
+            .removeDuplicates()
+            .sink { [weak self] count in self?.refreshStatusItem(count: count) }
+            .store(in: &cancellables)
     }
 
     func toggle() {
@@ -42,8 +55,7 @@ final class AppController: NSObject, NSApplicationDelegate {
         if state.hasAccessibility {
             state.hasAccessibility = interceptor.start()
         }
-        panel?.showNearTopRight()
-        statusItemController?.setActive(true)
+        showPanel()
     }
 
     private func deactivate() {
@@ -51,8 +63,30 @@ final class AppController: NSObject, NSApplicationDelegate {
         monitor.stop()
         interceptor.stop()
         store.clear()
+        hidePanel()
+    }
+
+    private func togglePanel() {
+        guard state.isActive else { return activate() }
+        state.isPanelVisible ? hidePanel() : showPanel()
+    }
+
+    private func showPanel() {
+        panel?.showNearTopRight()
+        state.isPanelVisible = true
+        refreshStatusItem()
+    }
+
+    private func hidePanel() {
         panel?.orderOut(nil)
-        statusItemController?.setActive(false)
+        state.isPanelVisible = false
+        refreshStatusItem()
+    }
+
+    private func refreshStatusItem(count: Int? = nil) {
+        statusItemController?.update(active: state.isActive,
+                                     panelVisible: state.isPanelVisible,
+                                     count: count ?? store.items.count)
     }
 
     private func itemClicked(_ item: StackItem) {

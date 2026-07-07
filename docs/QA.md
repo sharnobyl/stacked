@@ -30,5 +30,17 @@ stop being intercepted.
 - [ ] Click an item → it is removed and a manual ⌘V pastes it
 - [ ] Copying still works normally system-wide
 
+## Panel behavior
+- [ ] X button hides the panel; copies are still captured and ⌘V still pastes
+      from the stack
+- [ ] Trash button empties the stack (count goes to 0, empty state shows)
+- [ ] With direction reversed, each new copy appears at the TOP of the list
+      and the list auto-scrolls so it is visible
+- [ ] Panel has no title-bar dead space; compact rows
+
 ## Menu bar
 - [ ] Toggle Stack menu item works; About shows panel; Quit exits
+- [ ] Show Panel / Hide Panel menu item toggles the panel without
+      deactivating the stack; disabled while the stack is inactive
+- [ ] While active with N items, the menu-bar icon shows the count next to
+      it (even when the panel is hidden); badge disappears at 0 / inactive
