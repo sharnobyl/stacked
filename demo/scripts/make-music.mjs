@@ -33,7 +33,7 @@ const wav = (samples) => {
 const midi = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 // --- Music: 16s, 80bpm feel, one chord per 4s bar --------------------------
-const DUR = 16;
+const DUR = 12.8;
 const N = DUR * SR;
 const out = new Float64Array(N);
 

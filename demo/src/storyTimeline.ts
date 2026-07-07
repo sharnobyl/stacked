@@ -1,26 +1,21 @@
 // V2 "calendar invite" story — all frames and coordinates.
 
-export const S_DURATION = 480; // 16s @ 30fps
-
-// --- Intro cards ---
-export const INTRO1 = { from: 0, to: 52 }; // "The plan: Saturday climb"
-export const INTRO2 = { from: 50, to: 100 }; // "The problem: ..."
-export const DESKTOP_AT = 98; // desktop fades in
+export const S_DURATION = 382; // ~12.7s @ 30fps
 
 // --- Stack events ---
-export const S_HOTKEY_AT = 112; // ⇧⌘C
-export const S_PANEL_AT = 118;
-export const SHOT_KEY_AT = 132; // ⇧⌘3 over the event page
-export const SHOT_FLY_AT = 142;
-export const FOCUS_MAPS_AT = 160;
-export const MAPS_COPY_AT = 178;
-export const FOCUS_CHAT_AT = 196;
-export const CHAT_COPY_AT = 214;
-export const FOCUS_CAL_AT = 232;
-export const S_PASTE_AT = [244, 268, 292]; // screenshot→description, maps→location, emails→guests
-export const SAVE_AT = 318; // Save button click
-export const TOAST_AT = 324; // "Invitation sent"
-export const S_END_AT = 356; // end card fade-in
+export const S_HOTKEY_AT = 14; // ⇧⌘C
+export const S_PANEL_AT = 20;
+export const SHOT_KEY_AT = 34; // ⇧⌘3 over the event page
+export const SHOT_FLY_AT = 44;
+export const FOCUS_MAPS_AT = 62;
+export const MAPS_COPY_AT = 80;
+export const FOCUS_CHAT_AT = 98;
+export const CHAT_COPY_AT = 116;
+export const FOCUS_CAL_AT = 134;
+export const S_PASTE_AT = [146, 170, 194]; // screenshot→description, maps→location, emails→guests
+export const SAVE_AT = 220; // Save button click
+export const TOAST_AT = 226; // "Invitation sent"
+export const S_END_AT = 258; // end card fade-in
 export const S_FLIGHT = 9;
 
 // --- Layout ---

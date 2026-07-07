@@ -18,14 +18,11 @@ import {
   CHAT,
   CHAT_BUBBLE,
   CHAT_COPY_AT,
-  DESKTOP_AT,
   EVENT,
   FOCUS_CAL_AT,
   FOCUS_CHAT_AT,
   FOCUS_MAPS_AT,
   GUESTS_TEXT,
-  INTRO1,
-  INTRO2,
   MAPS,
   MAPS_COPY_AT,
   MAPS_LINK,
@@ -130,12 +127,6 @@ const EventShot: React.FC<{ w: number; h: number }> = ({ w, h }) => (
   </div>
 );
 
-const introOpacity = (frame: number, from: number, to: number) =>
-  interpolate(frame, [from, from + 8, to - 8, to], [0, 1, 1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
 export const Story: React.FC = () => {
   const frame = useCurrentFrame();
 
@@ -155,11 +146,6 @@ export const Story: React.FC = () => {
   ][phase];
 
   const flash = interpolate(frame, [SHOT_KEY_AT + 4, SHOT_KEY_AT + 6, SHOT_KEY_AT + 12], [0, 0.9, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  const desktopIn = interpolate(frame, [DESKTOP_AT, DESKTOP_AT + 12], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -189,7 +175,7 @@ export const Story: React.FC = () => {
   return (
     <AbsoluteFill style={{ fontFamily: FONT, background: "#101014" }}>
       {/* Desktop scene */}
-      <AbsoluteFill style={{ opacity: desktopIn }}>
+      <AbsoluteFill>
         <Wallpaper />
         <MenuBar appName={appName} stackCount={stackCount} stackVisible={frame >= S_PANEL_AT} />
 
@@ -568,50 +554,6 @@ export const Story: React.FC = () => {
           keycapPop(frame, at) > 0.01 ? <Keycap key={`v${i}`} label="⌘ V" pop={keycapPop(frame, at)} /> : null
         )}
       </AbsoluteFill>
-
-      {/* Intro cards */}
-      {frame < DESKTOP_AT + 14 && (
-        <AbsoluteFill
-          style={{
-            background: "#101014",
-            opacity: interpolate(frame, [DESKTOP_AT, DESKTOP_AT + 12], [1, 0], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-            zIndex: 25,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              textAlign: "center",
-              opacity: introOpacity(frame, INTRO1.from, INTRO1.to),
-              color: "#ffffff",
-            }}
-          >
-            <div style={{ fontSize: 68, fontWeight: 800 }}>Saturday: climbing with the crew 🧗</div>
-            <div style={{ fontSize: 32, color: "#98989f", marginTop: 22 }}>Time to send the invite.</div>
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              textAlign: "center",
-              opacity: introOpacity(frame, INTRO2.from, INTRO2.to),
-              color: "#ffffff",
-              maxWidth: 1250,
-            }}
-          >
-            <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1.25 }}>
-              The event, the directions, the people —
-              <br />
-              <span style={{ color: "#6ea8ff" }}>all in different apps.</span>
-            </div>
-          </div>
-        </AbsoluteFill>
-      )}
 
       {/* End card */}
       {endIn > 0 && (
