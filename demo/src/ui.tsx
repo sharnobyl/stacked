@@ -23,10 +23,11 @@ export const Wallpaper: React.FC = () => (
   </div>
 );
 
-export const MenuBar: React.FC<{ stackCount: number; stackVisible: boolean }> = ({
-  stackCount,
-  stackVisible,
-}) => (
+export const MenuBar: React.FC<{
+  appName: string;
+  stackCount: number;
+  stackVisible: boolean;
+}> = ({ appName, stackCount, stackVisible }) => (
   <div
     style={{
       position: "absolute",
@@ -43,10 +44,11 @@ export const MenuBar: React.FC<{ stackCount: number; stackVisible: boolean }> = 
       fontSize: 17,
       color: "#1d1d1f",
       boxShadow: "0 1px 0 rgba(0,0,0,0.08)",
+      zIndex: 9,
     }}
   >
     <span style={{ fontSize: 19, marginRight: 22 }}></span>
-    <span style={{ fontWeight: 700, marginRight: 22 }}>Notes</span>
+    <span style={{ fontWeight: 700, marginRight: 22 }}>{appName}</span>
     {["File", "Edit", "Format", "View", "Window", "Help"].map((m) => (
       <span key={m} style={{ marginRight: 22 }}>
         {m}
@@ -95,8 +97,9 @@ export const Window: React.FC<{
   h: number;
   title: string;
   focused?: boolean;
+  zIndex?: number;
   children?: React.ReactNode;
-}> = ({ x, y, w, h, title, focused = true, children }) => (
+}> = ({ x, y, w, h, title, focused = true, zIndex = 1, children }) => (
   <div
     style={{
       position: "absolute",
@@ -111,6 +114,7 @@ export const Window: React.FC<{
         : "0 12px 32px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.10)",
       overflow: "hidden",
       fontFamily: FONT,
+      zIndex,
     }}
   >
     <div
@@ -134,6 +138,109 @@ export const Window: React.FC<{
   </div>
 );
 
+// Safari-style URL bar; `sel` (0..1) animates the selection highlight.
+export const UrlBar: React.FC<{ url: string; w: number; sel: number }> = ({ url, w, sel }) => (
+  <div
+    style={{
+      position: "absolute",
+      left: 100,
+      top: 9,
+      width: w,
+      height: 34,
+      borderRadius: 9,
+      background: "#e9e8ea",
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      padding: "0 12px",
+      fontSize: 16,
+      color: "#3a3a3c",
+    }}
+  >
+    <span style={{ fontSize: 13, color: "#8e8e93" }}>🔒</span>
+    <span
+      style={{
+        background: `rgba(0, 122, 255, ${0.32 * sel})`,
+        borderRadius: 4,
+        padding: "2px 5px",
+        margin: "-2px -5px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {url}
+    </span>
+  </div>
+);
+
+// iMessage-style chat bubble.
+export const Bubble: React.FC<{
+  text: string;
+  mine?: boolean;
+  sel?: number;
+}> = ({ text, mine = false, sel = 0 }) => (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: mine ? "flex-end" : "flex-start",
+      padding: "5px 20px",
+    }}
+  >
+    <div
+      style={{
+        maxWidth: "72%",
+        borderRadius: 20,
+        padding: "10px 16px",
+        fontSize: 19,
+        lineHeight: 1.3,
+        background: mine ? "#0a84ff" : "#e9e9eb",
+        color: mine ? "#ffffff" : "#1d1d1f",
+        boxShadow: sel > 0 ? `0 0 0 ${3 * sel}px rgba(0,122,255,${0.45 * sel})` : "none",
+      }}
+    >
+      {text}
+    </div>
+  </div>
+);
+
+// Miniature of the demo desktop, used as the "screenshot" item.
+export const ScreenshotThumb: React.FC<{ w: number; h: number }> = ({ w, h }) => (
+  <div
+    style={{
+      width: w,
+      height: h,
+      borderRadius: Math.max(4, w * 0.03),
+      background: "linear-gradient(135deg, #1e3a6d 0%, #5a4fa2 65%, #8a4d9e 100%)",
+      position: "relative",
+      overflow: "hidden",
+      boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+      flexShrink: 0,
+    }}
+  >
+    <div
+      style={{
+        position: "absolute",
+        left: "10%",
+        top: "16%",
+        width: "46%",
+        height: "58%",
+        borderRadius: 3,
+        background: "rgba(255,255,255,0.92)",
+      }}
+    />
+    <div
+      style={{
+        position: "absolute",
+        left: "48%",
+        top: "34%",
+        width: "42%",
+        height: "52%",
+        borderRadius: 3,
+        background: "rgba(255,255,255,0.8)",
+      }}
+    />
+  </div>
+);
+
 // --- Keycap overlay (screencast-style) ------------------------------------
 
 export const Keycap: React.FC<{ label: string; pop: number }> = ({ label, pop }) => (
@@ -153,6 +260,7 @@ export const Keycap: React.FC<{ label: string; pop: number }> = ({ label, pop })
       fontWeight: 700,
       letterSpacing: 4,
       boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+      zIndex: 12,
     }}
   >
     {label}
@@ -161,28 +269,35 @@ export const Keycap: React.FC<{ label: string; pop: number }> = ({ label, pop })
 
 // --- Stack panel pieces ----------------------------------------------------
 
-export const RowIcon: React.FC = () => (
-  <div
-    style={{
-      width: 34,
-      height: 34,
-      borderRadius: 8,
-      background: "#eef1f6",
-      color: "#5b6472",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 19,
-      fontWeight: 800,
-      fontFamily: FONT,
-      flexShrink: 0,
-    }}
-  >
-    T
-  </div>
-);
+export const RowIcon: React.FC<{ kind: "text" | "image" }> = ({ kind }) =>
+  kind === "image" ? (
+    <ScreenshotThumb w={34} h={34} />
+  ) : (
+    <div
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 8,
+        background: "#eef1f6",
+        color: "#5b6472",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 19,
+        fontWeight: 800,
+        fontFamily: FONT,
+        flexShrink: 0,
+      }}
+    >
+      T
+    </div>
+  );
 
-export const ItemCard: React.FC<{ text: string; w: number }> = ({ text, w }) => (
+export const ItemCard: React.FC<{ text: string; kind: "text" | "image"; w: number }> = ({
+  text,
+  kind,
+  w,
+}) => (
   <div
     style={{
       width: w,
@@ -201,7 +316,7 @@ export const ItemCard: React.FC<{ text: string; w: number }> = ({ text, w }) => 
       overflow: "hidden",
     }}
   >
-    <RowIcon />
+    <RowIcon kind={kind} />
     <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{text}</span>
   </div>
 );

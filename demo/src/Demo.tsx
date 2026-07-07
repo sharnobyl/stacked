@@ -1,34 +1,59 @@
 import React from "react";
 import {
   AbsoluteFill,
+  Audio,
   Easing,
+  Img,
   interpolate,
+  Sequence,
   spring,
+  staticFile,
   useCurrentFrame,
 } from "remotion";
 import {
   COPY_AT,
+  END_CARD_AT,
   FLIGHT_FRAMES,
+  FOCUS_MAIL_AT,
+  FOCUS_MSGS_AT,
+  FOCUS_SAFARI_AT,
   FONT,
   FPS,
+  ITEMS,
   MAIL,
   MAIL_LINE_X,
   mailLineY,
-  NOTE_LINE_X,
+  MSG_BUBBLE,
+  MSGS,
+  NOTE_LINE,
   NOTES,
-  noteLineY,
   PANEL,
   PANEL_HEADER_H,
   PANEL_IN_AT,
   PASTE_AT,
+  PASTED_IMG,
   ROW_H,
   rowY,
-  SNIPPETS,
+  SAFARI,
+  SAFARI_URL,
+  SHOT_AT,
+  SHOT_FLIGHT_AT,
   STACK_HOTKEY_AT,
 } from "./timeline";
-import { ItemCard, Keycap, MenuBar, Wallpaper, Window } from "./ui";
+import {
+  Bubble,
+  ItemCard,
+  Keycap,
+  MenuBar,
+  ScreenshotThumb,
+  UrlBar,
+  Wallpaper,
+  Window,
+} from "./ui";
 
 const ROW_W = PANEL.w - 20;
+// Frame at which item i is "copied" (starts flying to the panel).
+const copyAt = (i: number) => (i < 3 ? COPY_AT[i] : SHOT_FLIGHT_AT);
 
 const springAt = (frame: number, at: number, config = { damping: 16, stiffness: 170 }) =>
   frame < at ? 0 : spring({ frame: frame - at, fps: FPS, config });
@@ -43,7 +68,7 @@ const keycapPop = (frame: number, at: number) => {
   return inP * out;
 };
 
-// Position along an arced flight path.
+// Progress + position along an arced flight path.
 const flight = (frame: number, at: number, from: [number, number], to: [number, number]) => {
   const t = interpolate(frame, [at, at + FLIGHT_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
@@ -57,74 +82,131 @@ const flight = (frame: number, at: number, from: [number, number], to: [number, 
   };
 };
 
+// Selection highlight: builds just before ⌘C, flashes off after.
+const selAt = (frame: number, at: number) =>
+  springAt(frame, at - 8) *
+  interpolate(frame, [at + 4, at + 10], [1, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
 export const Demo: React.FC = () => {
   const frame = useCurrentFrame();
 
   const panelIn = springAt(frame, PANEL_IN_AT, { damping: 13, stiffness: 140 });
-  const copied = COPY_AT.filter((f) => frame >= f).length;
+  const landed = ITEMS.filter((_, i) => frame >= copyAt(i) + FLIGHT_FRAMES).length;
   const pasted = PASTE_AT.filter((f) => frame >= f).length;
-  const stackCount = copied - pasted;
-  const pastePhase = frame >= PASTE_AT[0] - 10;
+  const stackCount = landed - pasted;
+
+  // Which window is front (drives menu bar app name, focus rings, z-order).
+  const phase =
+    frame >= FOCUS_MAIL_AT ? 3 : frame >= FOCUS_SAFARI_AT ? 2 : frame >= FOCUS_MSGS_AT ? 1 : 0;
+  const appName = ["Notes", "Messages", "Safari", "Mail"][phase];
+  const z = [
+    { notes: 4, msgs: 3, safari: 2, mail: 1 },
+    { notes: 2, msgs: 4, safari: 3, mail: 1 },
+    { notes: 2, msgs: 3, safari: 4, mail: 1 },
+    { notes: 1, msgs: 2, safari: 3, mail: 4 },
+  ][phase];
+
+  const flash = interpolate(frame, [SHOT_AT + 2, SHOT_AT + 4, SHOT_AT + 10], [0, 0.9, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  const endIn = interpolate(frame, [END_CARD_AT, END_CARD_AT + 12], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const logoPop = springAt(frame, END_CARD_AT + 4, { damping: 12, stiffness: 120 });
 
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
       <Wallpaper />
-      <MenuBar stackCount={stackCount} stackVisible={frame >= PANEL_IN_AT} />
+      <MenuBar appName={appName} stackCount={stackCount} stackVisible={frame >= PANEL_IN_AT} />
 
-      {/* Source: Notes */}
-      <Window x={NOTES.x} y={NOTES.y} w={NOTES.w} h={NOTES.h} title="Team sync" focused={!pastePhase}>
-        <div style={{ position: "absolute", left: 40, top: 76, fontSize: 30, fontWeight: 800, color: "#1d1d1f" }}>
+      {/* Source 1: Notes */}
+      <Window {...NOTES} title="Team sync" focused={phase === 0} zIndex={z.notes}>
+        <div style={{ position: "absolute", left: 40, top: 76, fontSize: 28, fontWeight: 800, color: "#1d1d1f" }}>
           Team sync — notes
         </div>
-        <div style={{ position: "absolute", left: 40, top: 128, fontSize: 21, color: "#8e8e93" }}>
+        <div style={{ position: "absolute", left: 40, top: 124, fontSize: 20, color: "#8e8e93" }}>
           Attendees: Maya, Jon, Priya
         </div>
-        {SNIPPETS.map((text, i) => {
-          // Selection highlight builds just before ⌘C, flashes off after.
-          const sel =
-            springAt(frame, COPY_AT[i] - 8) *
-            interpolate(frame, [COPY_AT[i] + 4, COPY_AT[i] + 10], [1, 0], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            });
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: NOTE_LINE_X - NOTES.x,
-                top: noteLineY(i) - NOTES.y - 18,
-                fontSize: 22,
-                color: "#2c2c2e",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-              }}
-            >
-              <span style={{ color: "#c7c7cc" }}>•</span>
-              <span
-                style={{
-                  background: `rgba(0, 122, 255, ${0.3 * sel})`,
-                  borderRadius: 4,
-                  padding: "3px 6px",
-                  margin: "-3px -6px",
-                }}
-              >
-                {text}
-              </span>
-            </div>
-          );
-        })}
-        <div style={{ position: "absolute", left: 40, top: noteLineY(3) - NOTES.y - 18, fontSize: 21, color: "#8e8e93" }}>
+        <div
+          style={{
+            position: "absolute",
+            left: NOTE_LINE.x - NOTES.x,
+            top: NOTE_LINE.y - NOTES.y - 16,
+            fontSize: 21,
+            color: "#2c2c2e",
+            display: "flex",
+            gap: 14,
+          }}
+        >
+          <span style={{ color: "#c7c7cc" }}>•</span>
+          <span
+            style={{
+              background: `rgba(0, 122, 255, ${0.3 * selAt(frame, COPY_AT[0])})`,
+              borderRadius: 4,
+              padding: "3px 6px",
+              margin: "-3px -6px",
+            }}
+          >
+            {ITEMS[0].text}
+          </span>
+        </div>
+        <div style={{ position: "absolute", left: 40, top: NOTE_LINE.y - NOTES.y + 60, fontSize: 20, color: "#8e8e93" }}>
           Next sync: Friday
         </div>
       </Window>
 
+      {/* Source 2: Messages */}
+      <Window {...MSGS} title="Priya" focused={phase === 1} zIndex={z.msgs}>
+        <div style={{ paddingTop: 16 }}>
+          <Bubble text="Are we still on for Thursday?" />
+          <Bubble text="Yes! Sending the details now" mine />
+          <Bubble text="Also — finance got back to us" />
+          <Bubble text={ITEMS[1].text} sel={selAt(frame, COPY_AT[1])} />
+        </div>
+      </Window>
+
+      {/* Source 3: Safari */}
+      <Window {...SAFARI} title="" focused={phase === 2} zIndex={z.safari}>
+        <UrlBar url={ITEMS[2].text} w={SAFARI.w - 300} sel={selAt(frame, COPY_AT[2])} />
+        <div style={{ position: "absolute", left: 44, top: 100, fontSize: 32, fontWeight: 800, color: "#1d1d1f" }}>
+          Stacked v2 — Design
+        </div>
+        <div style={{ position: "absolute", left: 44, top: 160, width: SAFARI.w - 88 }}>
+          {[0.95, 0.8, 0.9, 0.6].map((wf, i) => (
+            <div
+              key={i}
+              style={{
+                width: `${wf * 100}%`,
+                height: 15,
+                borderRadius: 7,
+                background: "#e7e7ea",
+                marginBottom: 16,
+              }}
+            />
+          ))}
+          <div
+            style={{
+              width: "100%",
+              height: 250,
+              borderRadius: 10,
+              background: "linear-gradient(135deg, #dfe6f5, #ecdff2)",
+              marginTop: 10,
+            }}
+          />
+        </div>
+      </Window>
+
       {/* Destination: Mail compose */}
-      <Window x={MAIL.x} y={MAIL.y} w={MAIL.w} h={MAIL.h} title="New Message" focused={pastePhase}>
+      <Window {...MAIL} title="New Message" focused={phase === 3} zIndex={z.mail}>
         {[
           ["To:", "team@acme.com"],
-          ["Subject:", "Kickoff update"],
+          ["Subject:", "Thursday — details"],
         ].map(([label, value], i) => (
           <div
             key={label}
@@ -142,14 +224,25 @@ export const Demo: React.FC = () => {
             {label} <span style={{ color: "#2c2c2e" }}>{value}</span>
           </div>
         ))}
-        <div style={{ position: "absolute", left: 32, top: 165, fontSize: 21, color: "#2c2c2e" }}>
-          Hi all — quick update:
+        <div style={{ position: "absolute", left: 32, top: 168, fontSize: 21, color: "#2c2c2e" }}>
+          Hi all — everything for Thursday:
         </div>
-        {SNIPPETS.map((text, i) => {
-          const landed = frame >= PASTE_AT[i] + FLIGHT_FRAMES;
+        {ITEMS.map((item, i) => {
+          if (frame < PASTE_AT[i] + FLIGHT_FRAMES) return null;
           const inP = springAt(frame, PASTE_AT[i] + FLIGHT_FRAMES);
-          if (!landed) return null;
-          return (
+          return item.kind === "image" ? (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: MAIL_LINE_X - MAIL.x,
+                top: mailLineY(i) - MAIL.y - 15,
+                opacity: inP,
+              }}
+            >
+              <ScreenshotThumb w={PASTED_IMG.w} h={PASTED_IMG.h} />
+            </div>
+          ) : (
             <div
               key={i}
               style={{
@@ -161,12 +254,12 @@ export const Demo: React.FC = () => {
                 opacity: inP,
               }}
             >
-              {text}
+              {item.text}
             </div>
           );
         })}
         {/* blinking insertion point at the next paste target */}
-        {pastePhase && pasted < 3 && (
+        {phase === 3 && pasted < 4 && frame < END_CARD_AT && (
           <div
             style={{
               position: "absolute",
@@ -195,6 +288,7 @@ export const Demo: React.FC = () => {
           transform: `scale(${0.75 + 0.25 * panelIn})`,
           transformOrigin: "top right",
           opacity: panelIn,
+          zIndex: 10,
         }}
       >
         <div
@@ -226,7 +320,7 @@ export const Demo: React.FC = () => {
           <div style={{ flex: 1 }} />
           <span style={{ color: "#8e8e93", fontSize: 16, letterSpacing: 2 }}>⇅ ✕</span>
         </div>
-        {stackCount === 0 && frame > PASTE_AT[2] && (
+        {stackCount === 0 && frame > PASTE_AT[3] && (
           <div
             style={{
               position: "absolute",
@@ -239,7 +333,7 @@ export const Demo: React.FC = () => {
               justifyContent: "center",
               color: "#aeaeb2",
               fontSize: 18,
-              opacity: springAt(frame, PASTE_AT[2] + FLIGHT_FRAMES + 2),
+              opacity: springAt(frame, PASTE_AT[3] + FLIGHT_FRAMES + 2),
             }}
           >
             Stack is empty
@@ -248,8 +342,8 @@ export const Demo: React.FC = () => {
       </div>
 
       {/* Panel rows (drawn above the panel so exits can fly out of it) */}
-      {SNIPPETS.map((text, i) => {
-        const landedAt = COPY_AT[i] + FLIGHT_FRAMES;
+      {ITEMS.map((item, i) => {
+        const landedAt = copyAt(i) + FLIGHT_FRAMES;
         if (frame < landedAt || frame >= PASTE_AT[i]) return null;
         // Earlier pastes shift this row up one slot each.
         const shift = PASTE_AT.slice(0, i).reduce(
@@ -266,31 +360,55 @@ export const Demo: React.FC = () => {
               top: rowY(i - shift),
               transform: `scale(${0.85 + 0.15 * pop})`,
               opacity: pop * panelIn,
+              zIndex: 10,
             }}
           >
-            <ItemCard text={text} w={ROW_W} />
+            <ItemCard text={item.text} kind={item.kind} w={ROW_W} />
           </div>
         );
       })}
 
-      {/* Copy flights: note line → panel slot */}
-      {SNIPPETS.map((text, i) => {
+      {/* Copy flights: source → panel slot */}
+      {ITEMS.slice(0, 3).map((item, i) => {
         if (frame < COPY_AT[i] || frame > COPY_AT[i] + FLIGHT_FRAMES) return null;
-        const f = flight(
-          frame,
-          COPY_AT[i],
-          [NOTE_LINE_X, noteLineY(i) - ROW_H / 2],
-          [PANEL.x + 10, rowY(i)]
-        );
+        const from: [number, number][] = [
+          [NOTE_LINE.x, NOTE_LINE.y - ROW_H / 2],
+          [MSG_BUBBLE.x, MSG_BUBBLE.y - ROW_H / 2],
+          [SAFARI_URL.x, SAFARI_URL.y - ROW_H / 2],
+        ];
+        const f = flight(frame, COPY_AT[i], from[i], [PANEL.x + 10, rowY(i)]);
         return (
-          <div key={i} style={{ position: "absolute", left: f.x, top: f.y, opacity: 1 - f.t * 0.25 }}>
-            <ItemCard text={text} w={ROW_W} />
+          <div key={i} style={{ position: "absolute", left: f.x, top: f.y, opacity: 1 - f.t * 0.25, zIndex: 11 }}>
+            <ItemCard text={item.text} kind="text" w={ROW_W} />
           </div>
         );
       })}
 
-      {/* Paste flights: panel top slot → mail body line */}
-      {SNIPPETS.map((text, i) => {
+      {/* Screenshot flight: shrinks from a center preview into the panel */}
+      {frame >= SHOT_FLIGHT_AT && frame <= SHOT_FLIGHT_AT + FLIGHT_FRAMES && (
+        (() => {
+          const f = flight(frame, SHOT_FLIGHT_AT, [700, 400], [PANEL.x + 10, rowY(3)]);
+          const w = 380 - (380 - 64) * f.t;
+          const h = 214 - (214 - 40) * f.t;
+          return (
+            <div
+              style={{
+                position: "absolute",
+                left: f.x,
+                top: f.y,
+                zIndex: 11,
+                boxShadow: "0 12px 36px rgba(0,0,0,0.4)",
+                borderRadius: 8,
+              }}
+            >
+              <ScreenshotThumb w={w} h={h} />
+            </div>
+          );
+        })()
+      )}
+
+      {/* Paste flights: panel top slot → mail body */}
+      {ITEMS.map((item, i) => {
         if (frame < PASTE_AT[i] || frame > PASTE_AT[i] + FLIGHT_FRAMES) return null;
         const f = flight(
           frame,
@@ -299,11 +417,16 @@ export const Demo: React.FC = () => {
           [MAIL_LINE_X, mailLineY(i) - ROW_H / 2 + 8]
         );
         return (
-          <div key={i} style={{ position: "absolute", left: f.x, top: f.y, opacity: 1 - f.t * 0.5 }}>
-            <ItemCard text={text} w={ROW_W} />
+          <div key={i} style={{ position: "absolute", left: f.x, top: f.y, opacity: 1 - f.t * 0.5, zIndex: 11 }}>
+            <ItemCard text={item.text} kind={item.kind} w={ROW_W} />
           </div>
         );
       })}
+
+      {/* Screenshot flash */}
+      {flash > 0 && (
+        <AbsoluteFill style={{ background: "#ffffff", opacity: flash, zIndex: 13 }} />
+      )}
 
       {/* Keycap overlay */}
       {keycapPop(frame, STACK_HOTKEY_AT) > 0.01 && (
@@ -312,9 +435,66 @@ export const Demo: React.FC = () => {
       {COPY_AT.map((at, i) =>
         keycapPop(frame, at) > 0.01 ? <Keycap key={`c${i}`} label="⌘ C" pop={keycapPop(frame, at)} /> : null
       )}
+      {keycapPop(frame, SHOT_AT) > 0.01 && <Keycap label="⇧ ⌘ 3" pop={keycapPop(frame, SHOT_AT)} />}
       {PASTE_AT.map((at, i) =>
         keycapPop(frame, at) > 0.01 ? <Keycap key={`v${i}`} label="⌘ V" pop={keycapPop(frame, at)} /> : null
       )}
+
+      {/* End card */}
+      {endIn > 0 && (
+        <AbsoluteFill
+          style={{
+            background: "#101014",
+            opacity: endIn,
+            zIndex: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            gap: 26,
+          }}
+        >
+          <Img
+            src={staticFile("logo.png")}
+            style={{
+              width: 190,
+              height: 190,
+              transform: `scale(${0.7 + 0.3 * logoPop})`,
+              opacity: logoPop,
+            }}
+          />
+          <div style={{ fontSize: 64, fontWeight: 800, color: "#ffffff", opacity: logoPop }}>
+            Try Stacked today
+          </div>
+          <div style={{ fontSize: 28, color: "#98989f", opacity: logoPop }}>
+            Free & open source · macOS 13+
+          </div>
+          <div style={{ fontSize: 26, fontWeight: 600, color: "#6ea8ff", opacity: logoPop }}>
+            github.com/sharnobyl/stacked
+          </div>
+        </AbsoluteFill>
+      )}
+
+      {/* Sound effects */}
+      <Sequence from={PANEL_IN_AT}>
+        <Audio src={staticFile("swish.wav")} />
+      </Sequence>
+      {[...COPY_AT.map((at) => at + FLIGHT_FRAMES), SHOT_FLIGHT_AT + FLIGHT_FRAMES].map((at, i) => (
+        <Sequence key={`pop${i}`} from={at}>
+          <Audio src={staticFile("pop.wav")} />
+        </Sequence>
+      ))}
+      <Sequence from={SHOT_AT + 2}>
+        <Audio src={staticFile("shutter.wav")} />
+      </Sequence>
+      {PASTE_AT.map((at, i) => (
+        <Sequence key={`paste${i}`} from={at}>
+          <Audio src={staticFile("paste.wav")} />
+        </Sequence>
+      ))}
+      <Sequence from={END_CARD_AT + 2}>
+        <Audio src={staticFile("chime.wav")} />
+      </Sequence>
     </AbsoluteFill>
   );
 };
