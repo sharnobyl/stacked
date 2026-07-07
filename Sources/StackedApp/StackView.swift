@@ -7,7 +7,7 @@ struct StackView: View {
 
     var onReverse: () -> Void
     var onDelete: (StackItem) -> Void
-    var onItemClick: (StackItem) -> Void
+    var onCopyItem: (StackItem) -> Void
     var onMove: (IndexSet, Int) -> Void
     var onClearAll: () -> Void
     var onRequestPermission: () -> Void
@@ -38,6 +38,14 @@ struct StackView: View {
             Text("\(store.items.count)")
                 .font(.caption).foregroundStyle(.secondary)
             Spacer()
+            if !state.hasAccessibility {
+                Button(action: onRequestPermission) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.yellow)
+                }
+                .buttonStyle(.borderless)
+                .help("⌘V interception is off — grant Accessibility in System Settings")
+            }
             Button(action: onReverse) {
                 Image(systemName: "arrow.up.arrow.down").font(.caption)
             }
@@ -64,7 +72,7 @@ struct StackView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Grant Accessibility to paste with ⌘V")
                     .font(.caption).bold()
-                Text("Until then, click an item to copy it, then paste manually.")
+                Text("Until then, use an item's copy button, then paste manually.")
                     .font(.caption2).foregroundStyle(.secondary)
                 Button("Open System Settings", action: onRequestPermission)
                     .font(.caption)
@@ -104,8 +112,6 @@ struct StackView: View {
                 ForEach(Array(store.orderedForPaste.enumerated()), id: \.element.id) { index, item in
                     row(for: item, isNext: index == 0)
                         .id(item.id)
-                        .contentShape(Rectangle())
-                        .onTapGesture { onItemClick(item) }
                         .contextMenu {
                             Button("Delete") { onDelete(item) }
                         }
@@ -140,6 +146,14 @@ struct StackView: View {
                 }
             }
             Spacer(minLength: 0)
+            if !state.hasAccessibility {
+                Button(action: { onCopyItem(item) }) {
+                    Image(systemName: "doc.on.doc")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help("Copy to clipboard for a manual paste")
+            }
             Button(action: { onDelete(item) }) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.caption2).foregroundStyle(.tertiary)
@@ -157,6 +171,11 @@ struct StackView: View {
                 .resizable().aspectRatio(contentMode: .fill)
                 .frame(width: 22, height: 22)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
+        } else if item.kind == .text {
+            Text("T")
+                .font(.caption.weight(.semibold))
+                .frame(width: 22, height: 22)
+                .foregroundStyle(.secondary)
         } else {
             Image(systemName: symbolName(for: item.kind))
                 .font(.caption)

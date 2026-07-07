@@ -13,6 +13,7 @@ final class AppController: NSObject, NSApplicationDelegate {
     private var panel: StackPanel?
     private var statusItemController: StatusItemController?
     private var cancellables: Set<AnyCancellable> = []
+    private var permissionTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         monitor.onCapture = { [weak self] item in self?.store.push(item) }
@@ -23,7 +24,7 @@ final class AppController: NSObject, NSApplicationDelegate {
             state: state,
             onReverse: { [weak self] in self?.store.toggleDirection() },
             onDelete: { [weak self] item in self?.store.remove(id: item.id) },
-            onItemClick: { [weak self] item in self?.itemClicked(item) },
+            onCopyItem: { [weak self] item in self?.copyItem(item) },
             onMove: { [weak self] indices, offset in
                 self?.store.moveDisplayed(fromOffsets: indices, toOffset: offset)
             },
@@ -61,15 +62,41 @@ final class AppController: NSObject, NSApplicationDelegate {
         if state.hasAccessibility {
             state.hasAccessibility = interceptor.start()
         }
+        startPermissionRecheck()
         showPanel()
     }
 
     private func deactivate() {
         state.isActive = false
+        permissionTimer?.invalidate()
+        permissionTimer = nil
         monitor.stop()
         interceptor.stop()
         store.clear()
         hidePanel()
+    }
+
+    /// The Accessibility grant can appear (user grants it in System Settings)
+    /// or vanish (app re-signed) while the stack is active — poll and adapt.
+    private func startPermissionRecheck() {
+        permissionTimer?.invalidate()
+        let timer = Timer(timeInterval: 2.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.recheckPermission() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        permissionTimer = timer
+    }
+
+    private func recheckPermission() {
+        guard state.isActive else { return }
+        let granted = PasteInterceptor.hasAccessibilityPermission()
+        guard granted != state.hasAccessibility else { return }
+        if granted {
+            state.hasAccessibility = interceptor.start()
+        } else {
+            interceptor.stop()
+            state.hasAccessibility = false
+        }
     }
 
     private func togglePanel() {
@@ -95,10 +122,9 @@ final class AppController: NSObject, NSApplicationDelegate {
                                      count: count ?? store.items.count)
     }
 
-    // Fallback mode only: load the clicked item onto the clipboard for a
-    // manual paste. The item stays in the stack — deletion is explicit.
-    private func itemClicked(_ item: StackItem) {
-        guard !state.hasAccessibility else { return }
+    // Fallback mode only: load the item onto the clipboard for a manual
+    // paste. The item stays in the stack — deletion is explicit.
+    private func copyItem(_ item: StackItem) {
         PasteboardIO.write(item, to: .general, markSelfWrite: true)
     }
 

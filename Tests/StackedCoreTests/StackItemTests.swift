@@ -56,3 +56,13 @@ final class StackItemTests: XCTestCase {
         XCTAssertEqual(item.totalByteCount, 16)
     }
 }
+
+extension StackItemTests {
+    func testKindImageForJPEG() {
+        let jpeg = Data([0xFF, 0xD8])
+        let item = StackItem(representations: [["public.jpeg": jpeg]])
+        XCTAssertEqual(item.kind, .image)
+        XCTAssertEqual(item.preview, "Image")
+        XCTAssertEqual(item.imageData, jpeg)
+    }
+}

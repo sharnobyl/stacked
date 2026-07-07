@@ -5,7 +5,7 @@ public struct StackItem: Identifiable, Equatable {
 
     public static let textType = "public.utf8-plain-text"
     public static let fileURLType = "public.file-url"
-    public static let imageTypes = ["public.png", "public.tiff"]
+    public static let imageTypes = ["public.png", "public.tiff", "public.jpeg"]
 
     public let id: UUID
     public let capturedAt: Date

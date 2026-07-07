@@ -10,3 +10,8 @@
 - ⇧⌥C toggles panel visibility; panel is resizable; per-row delete button
   (click no longer removes items in fallback mode); drag rows to reorder;
   dismissible permission banner.
+- Live Accessibility re-detection (granting/losing the permission mid-session
+  switches modes automatically) with a persistent warning icon in fallback
+  mode; whole rows are draggable (removed the tap gesture that blocked
+  drags); explicit per-row copy button in fallback mode; "T" icon for text
+  items; JPEG clipboard images recognized.
