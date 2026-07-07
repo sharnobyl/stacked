@@ -12,7 +12,6 @@ feature. Stacked is an independent open-source project and is not affiliated
 with Paste.
 
 ![Demo](docs/demo.gif)
-<!-- TODO: record demo gif -->
 
 ## How it works
 

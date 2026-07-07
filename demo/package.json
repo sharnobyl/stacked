@@ -1,0 +1,18 @@
+{
+  "name": "stacked-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion source for the Stacked demo video (docs/demo.mp4 and docs/demo.gif)",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Demo ../docs/demo.mp4 --codec=h264",
+    "render:gif": "remotion render src/index.ts Demo ../docs/demo.gif --codec=gif --scale=0.5 --every-nth-frame=2"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@remotion/cli": "4.0.485",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "remotion": "4.0.485"
+  }
+}
