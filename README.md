@@ -52,7 +52,7 @@ stack lives in memory and is cleared when you dismiss it or quit.
 ## Build from source
 
 ```sh
-git clone https://github.com/OWNER/stacked.git
+git clone https://github.com/sharnobyl/stacked.git
 cd stacked
 ./Scripts/bundle.sh          # produces build/Stacked.app
 open build/Stacked.app
