@@ -27,7 +27,7 @@ stop being intercepted.
 - [ ] Activate → yellow banner explains permission; "Open System Settings"
       opens the Accessibility pane
 - [ ] Copy two items → they appear in the panel
-- [ ] Click an item → it is removed and a manual ⌘V pastes it
+- [ ] Click an item → it is copied (stays in the stack) and a manual ⌘V pastes it
 - [ ] Copying still works normally system-wide
 
 ## Panel behavior
