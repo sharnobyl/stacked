@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Resources/AppIcon.png" width="160" alt="Stacked icon">
+  <img src="docs/logo.png" width="160" alt="Stacked icon">
 </p>
 
 # Stacked
